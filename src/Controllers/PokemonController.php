@@ -72,9 +72,24 @@ class PokemonController
         $uuid = (string) Uuid::uuid4();
         $type = $request->get('type');
         $level = (int) $request->get('level');
-
-        // TODO check type exists
-        // TODO check level is in bounds
+        $pokemonList = [
+            'pikachu',
+            'carapuce',
+            'salameche',
+            'bulbizarre',
+            'chenipan',
+            'aspicot',
+            'roucool',
+            'rattata'
+        ];
+        if (!in_array($type, $pokemonList)) {
+            return new JsonResponse([
+                'message' => "ce pokemon n'existe pas"
+            ]);
+        }
+        if ($level > 30 || $level < 1) {
+            return '';
+        }
 
         $sql = 'INSERT INTO pokemon.collection (uuid, type, level) VALUES (:uuid, :type, :level)';
         $query = $this->connection->prepare($sql);
@@ -97,8 +112,25 @@ class PokemonController
      */
     public function evolve($uuid)
     {
-        // TODO
+        $sql = 'SELECT * FROM pokemon.collection WHERE uuid=(:uuid)';
+        $query = $this->connection->prepare($sql);
+        $query->bindValue(uuid, $uuid);
+        $query->execute();
 
-        return new JsonResponse([]);
+        $pokemon = $query->fetch();
+        if ($pokemon['type'] === 'aspicot' && ($pokemon['level'] > 6 && $pokemon['level'] < 16)) {
+            $pokemon['type'] = 'coconfort';
+            $sql= 'UPDATE pokemon.collection SET type=(:type) WHERE uuid=(:uuid)';
+            $query = $this->connection->prepare($sql);
+            $query->bindValue('uuid', $uuid);
+            $query->bindValue('type', $pokemon['type']);
+            $query->execute();
+        }
+
+        return new JsonResponse([
+            'uuid' => $pokemon['uuid'],
+            'type' => $pokemon['type'],
+            'level' => $pokemon['level'],
+        ]);
     }
 }
